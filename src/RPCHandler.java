@@ -6,7 +6,7 @@ public final class RPCHandler {
 
     public final boolean WithCallBack;
 
-    private final IRPCH m_hrpc;
+    private final IRPCH hrpc;
 
     public RPCHandler(final String name, final IRPCH handler, final boolean callback)
     {
@@ -15,17 +15,17 @@ public final class RPCHandler {
             throw new InvalidParameterException("RPCHandler: Name must not be emtpy!");
         }
         Name = name;
-        m_hrpc = handler;
+        hrpc = handler;
         WithCallBack = callback;
     }
 
     final public void Handle()
     {
-        m_hrpc.Handle();
+        hrpc.Handle();
     }
 
     final public void CallBack()
     {
-        m_hrpc.CallBack();
+        hrpc.CallBack();
     }
 } 
