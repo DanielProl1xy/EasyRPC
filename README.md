@@ -31,7 +31,7 @@ EasyRPC sys = EasyRPC.GetInstance();
 sys.Call(testHandler, socket);
 
 // wait for the call-back, if needed
-sys.Recieve(cli);     
+sys.Recieve(socket);     
 ```
 4. Recieve the RPC on another machine
 ```java

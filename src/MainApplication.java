@@ -1,6 +1,9 @@
 import java.net.ServerSocket;
 import java.net.Socket;
 
+
+// Provided as a simple example of usage
+
 public abstract class MainApplication {
 
     public static RPCHandler testHandler;
