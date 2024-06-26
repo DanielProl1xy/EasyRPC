@@ -9,40 +9,40 @@ import java.util.Map;
 
 public final class EasyRPC {
 
-    public final static double VERSION = 0.1;
-    public final static int PROTOCOL_MAGIC = 0x89179708;
-    public final static int INT_SIZE = 4;
-    public final static int DOUBLE_SIZE = 8;
-    public final static int PROTOCOL_SIZE = INT_SIZE*2;
-    public final static int HEAD_SIZE = INT_SIZE*2 + DOUBLE_SIZE;
+    public final static double Version = 0.1;
+    public final static int ProtocolMagic = 0x89179708;
+    public final static int IntSize = 4;
+    public final static int DoubleSize = 8;
+    public final static int ProtocolSize = IntSize*2;
+    public final static int HeadSize = IntSize*2 + DoubleSize;
 
-    private Map<String, RPCHandler> m_rpcMap;
+    private Map<String, RPCHandler> rpcMap;
     
-    private static EasyRPC m_instance;
+    private static EasyRPC instance;
         
     public enum CallKind
     {
-        CALL_HANDLE,
+        CALL,
         CALLBACK,
     }
 
     public static EasyRPC GetInstance()
     {
-        if(m_instance == null)
+        if(instance == null)
         {
-            m_instance = new EasyRPC();
+            instance = new EasyRPC();
         }
 
-        return m_instance;
+        return instance;
     }
     
     public void RegisterHandler(final RPCHandler handler)
     {
-        if(m_rpcMap.containsKey(handler.Name))
+        if(rpcMap.containsKey(handler.Name))
         {
             throw new InvalidParameterException("RPC Handler with name \"" + handler.Name + "\" is already registered");
         }
-        m_rpcMap.put(handler.Name, handler);
+        rpcMap.put(handler.Name, handler);
     }
 
     public boolean Recieve(Socket sock)
@@ -51,11 +51,11 @@ public final class EasyRPC {
         ByteBuffer message;
         try {
             in = sock.getInputStream();
-            ByteBuffer protocolBuff = ByteBuffer.allocate(PROTOCOL_SIZE);
-            protocolBuff.put(in.readNBytes(PROTOCOL_SIZE));
+            ByteBuffer protocolBuff = ByteBuffer.allocate(ProtocolSize);
+            protocolBuff.put(in.readNBytes(ProtocolSize));
             protocolBuff.position(0);
             int protocol = protocolBuff.getInt();
-            if(protocol != PROTOCOL_MAGIC)
+            if(protocol != ProtocolMagic)
             {
                 System.err.println("[ERROR]: Failed to read message, invalid protocol magic " + protocol);
                 return false;
@@ -74,7 +74,7 @@ public final class EasyRPC {
                 case CALLBACK:
                     pair.First.CallBack();
                     break;
-                case CALL_HANDLE:
+                case CALL:
                     pair.First.Handle();
                     if(pair.First.WithCallBack)
                     {
@@ -90,12 +90,12 @@ public final class EasyRPC {
 
     public boolean Call(final RPCHandler rpc, Socket sock) 
     {
-        if(!m_rpcMap.containsKey(rpc.Name))
+        if(!rpcMap.containsKey(rpc.Name))
         {
             throw new InvalidParameterException("RPC Handler with name \"" + rpc.Name + "\" called but not registered");
         }
         
-        return callRPC(rpc, sock, CallKind.CALL_HANDLE);        
+        return callRPC(rpc, sock, CallKind.CALL);        
     }
 
     private boolean callRPC(final RPCHandler rpc, Socket sock, CallKind callas)
@@ -121,13 +121,13 @@ public final class EasyRPC {
 
     private byte[] serializeCallData(final RPCHandler rpc, final CallKind callas)
     {
-        int size = rpc.Name.length() + INT_SIZE*4 + DOUBLE_SIZE;
+        int size = rpc.Name.length() + IntSize*4 + DoubleSize;
         ByteBuffer buff = ByteBuffer.allocate(size);
 
-        buff.putInt(PROTOCOL_MAGIC);
-        buff.putInt(size - PROTOCOL_SIZE); // body size
+        buff.putInt(ProtocolMagic);
+        buff.putInt(size - ProtocolSize); // body size
 
-        buff.putDouble(VERSION);
+        buff.putDouble(Version);
         buff.putInt(callas.ordinal());
         buff.putInt(rpc.Name.length());
         buff.put(rpc.Name.getBytes());
@@ -139,16 +139,16 @@ public final class EasyRPC {
     {
         ByteBuffer buff = ByteBuffer.wrap(data);
 
-        if(buff.limit() < HEAD_SIZE)
+        if(buff.limit() < HeadSize)
         {
             System.err.println("[ERROR]: Invalid message size");
             return null;
         }
 
-        double version = buff.getDouble();
-        if(version != VERSION)
+        double Version = buff.getDouble();
+        if(Version != Version)
         {
-            System.err.println("[ERROR]: Not matching version (" + version + " vs " + VERSION + ")");
+            System.err.println("[ERROR]: Not matching Version (" + Version + " vs " + Version + ")");
             return null;
         }
 
@@ -170,9 +170,9 @@ public final class EasyRPC {
         buff.get(nameBuff, 0, size);
         String name = new String(nameBuff);
 
-        if(m_rpcMap.containsKey(name))
+        if(rpcMap.containsKey(name))
         {
-            return new Pair<RPCHandler, CallKind>(m_rpcMap.get(name), callas);
+            return new Pair<RPCHandler, CallKind>(rpcMap.get(name), callas);
         }
         else
         {
@@ -184,6 +184,6 @@ public final class EasyRPC {
 
     private EasyRPC()
     {
-        m_rpcMap = new HashMap<String, RPCHandler>();
+        rpcMap = new HashMap<String, RPCHandler>();
     }
 }

@@ -21,7 +21,7 @@ public abstract class MainApplication {
         EasyRPC sys = EasyRPC.GetInstance();
         sys.RegisterHandler(testHandler);
 
-        Thread serv_t = new Thread() {
+        Thread servT = new Thread() {
             @Override
             public void run()
             {
@@ -37,7 +37,7 @@ public abstract class MainApplication {
             }
         };
         
-        Thread cli_t = new Thread() {
+        Thread clientT = new Thread() {
             @Override
             public void run()
             {
@@ -51,11 +51,11 @@ public abstract class MainApplication {
             }
         };
 
-        serv_t.start();
-        cli_t.start();
+        servT.start();
+        clientT.start();
         try {
-            serv_t.join();
-            cli_t.join();
+            servT.join();
+            clientT.join();
         } catch (Exception e) {
             e.printStackTrace();
         }
