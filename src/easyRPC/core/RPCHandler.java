@@ -1,3 +1,4 @@
+package easyRPC.core;
 import java.security.InvalidParameterException;
 
 public final class RPCHandler {

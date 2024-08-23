@@ -1,3 +1,4 @@
+package easyRPC.core;
 public final class Pair <T, V> {
 
     public final T First;

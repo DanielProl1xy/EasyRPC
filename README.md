@@ -1,41 +1,70 @@
-# EasyRPC 
-This is a simple Remote Procedure Call library, that implements easy to understand intarface for registering, calling and handling two-sided networking with RPCs. 
-# How to use
-1. Create a RPC handler object
-```java     
-RPCHandler testHandler = new RPCHandler("test", // Name the RPC
-// name must be unique
-// an interface for handling calls and callbacks of this RPC
-new IRPCH() { 
-    @Override
-    public void Handle() { System.out.println("Hello, world!"); }
-    @Override 
-    public void CallBack() { System.out.println("Call back!"); }
-}, 
-true); // Indicates wether RPC should call the callback
-```
-3. Register a RPC in the system
-``` java
-EasyRPC sys = EasyRPC.GetInstance(); // Singleton implementation
-sys.RegisterHandler(testHandler);
-```
-2. Open sockets using Sockets class
-```java
-Socket socket = serverSocket.accept(); // Server machine
+# Java RPC Framework
 
-Socket sock = new Socket(host, port); // Client machine
+This Java RPC (Remote Procedure Call) framework allows for easy creation and management of remote procedure calls using annotations. It supports callback methods for asynchronous processing.
+
+## Features
+
+- **Annotation-based**: Use custom annotations to define replicated classes and remote procedure calls.
+- **Callback Support**: Easily specify callback methods for asynchronous handling.
+- **Reflection**: Utilizes Java reflection to dynamically invoke methods.
+
+## Annotations
+
+### `@ReplicatedClass`
+
+This annotation marks a class as a replicated that can contain remote procedure calls.
+
+### `@RemoteProcedureCall`
+
+This annotation marks a method as a remote procedure call. It has the following parameters:
+
+- `withCallBack` (boolean): Indicates whether the method has an associated callback.
+- `callbackName` (String): The name of the callback method (required if `withCallBack` is true).
+
+**Note**: All methods annotated with `@RemoteProcedureCall` must be declared as `static`.
+
+## Usage
+
+### Step 1: Define a Replicated Class
+
+Create a class and annotate it with `@ReplicatedClass`. Define your remote procedure call methods using `@RemoteProcedureCall`, ensuring that they are static.
+
+```java
+@ReplicatedClass
+public class TestReplicatedObject {
+    
+    @RemoteProcedureCall(withCallBack = true, callbackName = "HandleCallBack")
+    private static void Handle() {
+        System.out.println("Hello, world!"); 
+    }
+
+    private static void HandleCallBack() {
+        System.out.println("CallBack"); 
+    }
+}
 ```
-3. Call the RPC
+
+### Step 2: Register the Class
+To register your replicated class with the RPC framework, use the EasyRPC singleton instance and call the RegisterClass method, passing the class you want to register.
+
+
+```java
+EasyRPC sys = EasyRPC.GetInstance();
+sys.RegisterClass(TestReplicatedObject.class);
+```
+
+### Step 3: Invoke Remote Procedure Calls
+Once registered, you can invoke the remote procedure calls defined in your replicated class. The framework will handle the invocation and any associated callbacks.
 ```java
 EasyRPC sys = EasyRPC.GetInstance();
 sys.Call(testHandler, socket);
 
 // wait for the call-back, if needed
-sys.Recieve(socket);     
+sys.Recieve(socket);    
 ```
-4. Recieve the RPC on another machine
+
+### Step 4: Receive Remote Procedure Calls
 ```java
 EasyRPC sys = EasyRPC.GetInstance();
-sys.Recieve(anotherSocket);
+sys.Receive(anotherSocket);
 ```
-Done! You succesfully did the remote procedure call using EasyRPC.

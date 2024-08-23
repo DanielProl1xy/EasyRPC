@@ -1,25 +1,15 @@
+package easyRPC;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-
-// Provided as a simple example of usage
+import easyRPC.test.TestReplicatedObject;
 
 public abstract class MainApplication {
-
-    public static RPCHandler testHandler;
     
-    public static void main(String[] args)
+    public static void main(String[] args) throws Exception
     {
-        
-        testHandler = new RPCHandler("test", new IRPCH() {
-            @Override
-            public void Handle() { System.out.println("Hello, world!"); }
-            @Override 
-            public void CallBack() { System.out.println("Call back!"); }
-        }, true);
-        
         EasyRPC sys = EasyRPC.GetInstance();
-        sys.RegisterHandler(testHandler);
+        sys.RegisterClass(TestReplicatedObject.class);
 
         Thread servT = new Thread() {
             @Override
@@ -28,8 +18,8 @@ public abstract class MainApplication {
                 try {
                     ServerSocket serv = new ServerSocket(6969);
                     Socket cli = serv.accept();
-                    sys.Call(testHandler, cli);
-                    sys.Recieve(cli);
+                    sys.Call("Handle", cli);
+                    sys.Receive(cli);
                     serv.close();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -43,7 +33,7 @@ public abstract class MainApplication {
             {
                 try {
                     Socket sock = new Socket("127.0.0.1", 6969);
-                    sys.Recieve(sock);
+                    sys.Receive(sock);
                     sock.close();
                 } catch (Exception e) {
                     e.printStackTrace();

@@ -1,11 +1,20 @@
+package easyRPC;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.security.InvalidParameterException;
 import java.util.HashMap;
 import java.util.Map;
+
+import easyRPC.annotations.RemoteProcedureCall;
+import easyRPC.annotations.ReplicatedClass;
+import easyRPC.core.IRPCH;
+import easyRPC.core.Pair;
+import easyRPC.core.RPCHandler;
 
 public final class EasyRPC {
 
@@ -36,16 +45,74 @@ public final class EasyRPC {
         return instance;
     }
     
-    public void RegisterHandler(final RPCHandler handler)
+    public void RegisterClass(Class<?> clazz) throws Exception
     {
-        if(rpcMap.containsKey(handler.Name))
+        if(!clazz.isAnnotationPresent(ReplicatedClass.class))
         {
-            throw new InvalidParameterException("RPC Handler with name \"" + handler.Name + "\" is already registered");
+            throw new InvalidParameterException("Object must be replicated object");
         }
-        rpcMap.put(handler.Name, handler);
+        
+        for (Method method : clazz.getDeclaredMethods()) {
+            
+            if(method.isAnnotationPresent(RemoteProcedureCall.class))
+            {
+                method.setAccessible(true);
+                RemoteProcedureCall rpc = (method.getAnnotation(RemoteProcedureCall.class));
+
+                if(!Modifier.isStatic(method.getModifiers())) throw new InvalidParameterException();
+
+                Method callback;
+                RPCHandler handler;
+
+                if(rpc.withCallBack())
+                {
+                    callback = clazz.getDeclaredMethod(rpc.callbackName());
+                    callback.setAccessible(true);
+                    if(!Modifier.isStatic(callback.getModifiers())) throw new InvalidParameterException();
+
+                    handler = new RPCHandler(method.getName(), new IRPCH() {
+                        @Override
+                        public void Handle() { 
+                            try {
+                                method.invoke(null); 
+                                
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        @Override 
+                        public void CallBack() {
+                            try {
+                                callback.invoke(null);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }, true);
+                }
+                else
+                {
+                    handler = new RPCHandler(method.getName(), new IRPCH() {
+                        @Override
+                        public void Handle() { 
+                            try {
+                                method.invoke(null); 
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        @Override 
+                        public void CallBack() {
+                        }
+                    }, true);
+                }
+
+                rpcMap.put(method.getName(), handler);
+            }
+        }
     }
 
-    public boolean Recieve(Socket sock)
+    public boolean Receive(Socket sock)
     {
         InputStream in;
         ByteBuffer message;
@@ -88,14 +155,14 @@ public final class EasyRPC {
         return false;
     }
 
-    public boolean Call(final RPCHandler rpc, Socket sock) 
+    public boolean Call(final String rpcName, Socket sock) 
     {
-        if(!rpcMap.containsKey(rpc.Name))
+        if(!rpcMap.containsKey(rpcName))
         {
-            throw new InvalidParameterException("RPC Handler with name \"" + rpc.Name + "\" called but not registered");
+            throw new InvalidParameterException("RPC Handler with name \"" + rpcName + "\" called but not registered");
         }
         
-        return callRPC(rpc, sock, CallKind.CALL);        
+        return callRPC(rpcMap.get(rpcName), sock, CallKind.CALL);        
     }
 
     private boolean callRPC(final RPCHandler rpc, Socket sock, CallKind callas)
