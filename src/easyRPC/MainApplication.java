@@ -16,9 +16,10 @@ public abstract class MainApplication {
             public void run()
             {
                 try {
-                    ServerSocket serv = new ServerSocket(6969);
+                    ServerSocket serv = new ServerSocket(5070);
                     Socket cli = serv.accept();
-                    sys.Call("Handle", cli);
+                    sys.Call(cli, "Handle");
+                    sys.Call(cli, "WithParam",1L, 5L);
                     sys.Receive(cli);
                     serv.close();
                 } catch (Exception e) {
@@ -32,7 +33,8 @@ public abstract class MainApplication {
             public void run()
             {
                 try {
-                    Socket sock = new Socket("127.0.0.1", 6969);
+                    Socket sock = new Socket("127.0.0.1", 5070);
+                    sys.Receive(sock);
                     sys.Receive(sock);
                     sock.close();
                 } catch (Exception e) {
@@ -49,6 +51,5 @@ public abstract class MainApplication {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 }

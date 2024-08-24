@@ -41,6 +41,12 @@ public class TestReplicatedObject {
     private static void HandleCallBack() {
         System.out.println("CallBack"); 
     }
+
+    @RemoteProcedureCall 
+    private static void WithParam(Long id, Long d) /* Long params only allowed at the moment */
+    {
+        System.out.println("Got parameters: " + id + " : " + d);
+    }
 }
 ```
 
@@ -57,7 +63,8 @@ sys.RegisterClass(TestReplicatedObject.class);
 Once registered, you can invoke the remote procedure calls defined in your replicated class. The framework will handle the invocation and any associated callbacks.
 ```java
 EasyRPC sys = EasyRPC.GetInstance();
-sys.Call(testHandler, socket);
+sys.Call(socket, "Handle");
+sys.Call(socket, "WithParam", 1L, 5L);
 
 // wait for the call-back, if needed
 sys.Recieve(socket);    

@@ -1,5 +1,6 @@
 package easyRPC.test;
 
+import easyRPC.annotations.RemoteCallBack;
 import easyRPC.annotations.RemoteProcedureCall;
 import easyRPC.annotations.ReplicatedClass;
 
@@ -12,8 +13,15 @@ public class TestReplicatedObject {
         System.out.println("Hello, world!"); 
     }
 
-    private static void HandleCallBack()
+    @RemoteCallBack
+    private static void HandleCallBack(final boolean result)
     {
         System.out.println("CallBack"); 
+    }
+
+    @RemoteProcedureCall
+    private static void WithParam(Long id, Long d)
+    {
+        System.out.println("Got parameters: " + id + ", " + d);
     }
 }

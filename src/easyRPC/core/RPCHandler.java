@@ -20,13 +20,13 @@ public final class RPCHandler {
         WithCallBack = callback;
     }
 
-    final public void Handle()
+    final public void Handle(Object... args)
     {
-        hrpc.Handle();
+        hrpc.Handle(args);
     }
 
-    final public void CallBack()
+    final public void CallBack(final boolean result)
     {
-        hrpc.CallBack();
+        hrpc.CallBack(result);
     }
 } 

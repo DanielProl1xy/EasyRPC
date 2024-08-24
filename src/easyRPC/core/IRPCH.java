@@ -1,6 +1,6 @@
 package easyRPC.core;
-public abstract class IRPCH {
 
-    public abstract void Handle();
-    public abstract void CallBack();
+public interface IRPCH {
+    public void Handle(Object... args);
+    public void CallBack(final boolean result);
 }
