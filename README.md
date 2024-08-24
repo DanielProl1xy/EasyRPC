@@ -38,7 +38,7 @@ public class TestReplicatedObject {
         System.out.println("Hello, world!"); 
     }
 
-    private static void HandleCallBack() {
+    private static void HandleCallBack(final boolean result) {
         System.out.println("CallBack"); 
     }
 
