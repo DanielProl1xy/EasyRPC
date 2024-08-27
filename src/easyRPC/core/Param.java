@@ -29,8 +29,8 @@ public final class Param {
     public final Object Value;
     public final ParamType Type;
 
-    public Param(final ParamType ftype, final int fsize,final byte[] from)  {
-
+    public Param(final ParamType ftype, final int fsize,final byte[] from)
+    {
         ByteBuffer b = ByteBuffer.wrap(from);
         Size = fsize;
         Type = ftype;
