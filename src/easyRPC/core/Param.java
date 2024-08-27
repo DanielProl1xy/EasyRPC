@@ -91,10 +91,6 @@ public final class Param {
         } else {
             Size = 0;
             Type = ParamType.INVALID;
-        }
-
-        if(Type == ParamType.INVALID)
-        {
             throw new InvalidParameterException("Invalid argument Type");
         }
 
