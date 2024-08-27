@@ -17,13 +17,14 @@ import easyRPC.annotations.ReplicatedClass;
 import easyRPC.core.IRPCH;
 import easyRPC.core.Pair;
 import easyRPC.core.Param;
+import easyRPC.core.Param.ParamType;
 import easyRPC.core.RPCHandler;
 
 
 public final class EasyRPC {
 
-    public final static double Version = 0.3;
-    public final static int ProtocolMagic = 0xABC7FA00;
+    public final static double Version = 0.35;
+    public final static int ProtocolMagic = 0xABD7FA00;
     public final static int ProtocolSize = Param.IntSize*2;
     public final static int HeadSize = Param.IntSize*2 + Param.DoubleSize;
 
@@ -196,7 +197,7 @@ public final class EasyRPC {
         for (Object arg : args) {
             Param p = new Param(arg);
             params.add(p);
-            argsSize += p.size;
+            argsSize += p.Size + 6;
         }
 
         int size = rpc.Name.length() + Param.IntSize*4 + Param.DoubleSize + argsSize;
@@ -210,7 +211,7 @@ public final class EasyRPC {
         buff.put(rpc.Name.getBytes());
 
         for (Param param : params) {
-            buff.put(param.value);
+            buff.put(param.Bytes);
         }
 
         return buff.array();
@@ -255,7 +256,13 @@ public final class EasyRPC {
         {
             while(buff.remaining() > 0)
             {
-                args.add(buff.getLong());
+                char typeCode = buff.getChar();
+                ParamType type = ParamType.values()[typeCode];
+                int paramsize = buff.getInt();
+                byte[] param = new byte[paramsize];
+                buff.get(param);
+                Param p = new Param(type, paramsize, param);
+                args.add(p.Value);
             }
         } 
 
@@ -265,7 +272,7 @@ public final class EasyRPC {
         }
         else
         {
-            System.err.println("[ERROR]: RPC with name \"" + name + "\" not found");
+            System.err.println("[ERROR]: RPC with name \"" + name + "\" was not found");
         }
 
         return null;

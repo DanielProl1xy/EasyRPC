@@ -38,14 +38,20 @@ public class TestReplicatedObject {
         System.out.println("Hello, world!"); 
     }
 
+    @RemoteCallBack
     private static void HandleCallBack(final boolean result) {
         System.out.println("CallBack"); 
     }
 
     @RemoteProcedureCall 
-    private static void WithParam(Long id, Long d) /* Long params only allowed at the moment */
+    private static void WithParam(float id, String str) 
     {
-        System.out.println("Got parameters: " + id + " : " + d);
+        /* 
+         * Supported parameter types:
+         * String
+         * Number -> int, long, float, double, char, short
+        */
+        System.out.println("Got parameters: " + id + " : " + str);
     }
 }
 ```
@@ -64,7 +70,7 @@ Once registered, you can invoke the remote procedure calls defined in your repli
 ```java
 EasyRPC sys = EasyRPC.GetInstance();
 sys.Call(socket, "Handle");
-sys.Call(socket, "WithParam", 1L, 5L);
+sys.Call(socket, "WithParam", 35.5, "this is a remote message!");
 
 // wait for the call-back, if needed
 sys.Recieve(socket);    

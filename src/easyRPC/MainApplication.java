@@ -19,7 +19,7 @@ public abstract class MainApplication {
                     ServerSocket serv = new ServerSocket(5070);
                     Socket cli = serv.accept();
                     sys.Call(cli, "Handle");
-                    sys.Call(cli, "WithParam",1L, 5L);
+                    sys.Call(cli, "WithParam",35.5f, "this is a remote message!");
                     sys.Receive(cli);
                     serv.close();
                 } catch (Exception e) {

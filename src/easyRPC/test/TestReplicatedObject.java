@@ -20,8 +20,8 @@ public class TestReplicatedObject {
     }
 
     @RemoteProcedureCall
-    private static void WithParam(Long id, Long d)
+    private static void WithParam(float id, String str)
     {
-        System.out.println("Got parameters: " + id + ", " + d);
+        System.out.println("Got parameters: " + id + ", " + str);
     }
 }
