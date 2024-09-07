@@ -64,11 +64,11 @@ public final class EasyRPC {
             
             if(method.isAnnotationPresent(RemoteProcedureCall.class))
             {
-                method.setAccessible(true);
                 RemoteProcedureCall rpc = (method.getAnnotation(RemoteProcedureCall.class));
-
+                
                 if(!Modifier.isStatic(method.getModifiers())) throw new InvalidParameterException("RPC method must be static mebmer");
-
+                
+                method.setAccessible(true);
                 Method callback;
                 RPCHandler handler;
 
@@ -89,9 +89,9 @@ public final class EasyRPC {
                     if(rpc.callbackName().isEmpty()) throw new InvalidParameterException("Callback name can't be emtpy.");
 
                     callback = clazz.getDeclaredMethod(rpc.callbackName(), boolean.class);
-                    callback.setAccessible(true);
                     if(!Modifier.isStatic(callback.getModifiers())) throw new InvalidParameterException("Callback method must be static member");
                     
+                    callback.setAccessible(true);
                     handler = new RPCHandler(clazz.getName() + "." + method.getName(), method, callback, true);
                 }
                 else
