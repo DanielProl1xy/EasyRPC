@@ -8,7 +8,12 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface RemoteProcedureCall {
     
-    public boolean withCallBack() default false;
     public String callbackName() default "";
+    public RPCFlag[] flags() default {};
+
+    public enum RPCFlag
+    {
+        WithCallBack,
+    }
 
 }

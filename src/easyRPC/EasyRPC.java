@@ -1,4 +1,5 @@
 package easyRPC;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -6,31 +7,30 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidParameterException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import easyRPC.annotations.RemoteProcedureCall;
 import easyRPC.annotations.ReplicatedClass;
-import easyRPC.core.IRPCH;
-import easyRPC.core.Pair;
-import easyRPC.core.Param;
-import easyRPC.core.Param.ParamType;
-import easyRPC.core.RPCHandler;
-
+import easyRPC.annotations.RemoteProcedureCall.RPCFlag;
+import easyRPC.core.interfaces.ICallSerializator;
+import easyRPC.core.internal.CallData;
+import easyRPC.core.internal.Param;
+import easyRPC.core.internal.RPCHandler;
 
 public final class EasyRPC {
 
-    public final static double Version = 0.35;
-    public final static int ProtocolMagic = 0xABD7FA00;
+    public final static int ProtocolMagic = 0x32ABAFF0;
     public final static int ProtocolSize = Param.IntSize*2;
-    public final static int HeadSize = Param.IntSize*2 + Param.DoubleSize;
+    public final static double Version = 0.36;
+
+    private static EasyRPC instance;
 
     private Map<String, RPCHandler> rpcMap;
-    
-    private static EasyRPC instance;
+
+    private final ICallSerializator serializator;
         
     public enum CallKind
     {
@@ -38,13 +38,18 @@ public final class EasyRPC {
         CALLBACK,
     }
 
-    public static EasyRPC GetInstance()
+    public static EasyRPC Start(ICallSerializator serializator) throws InvalidAlgorithmParameterException
     {
         if(instance == null)
         {
-            instance = new EasyRPC();
+            instance = new EasyRPC(serializator);
+            return instance;
         }
+        throw new InvalidAlgorithmParameterException("Easy RPC is already running");
+    }
 
+    public static EasyRPC GetInstance()
+    {
         return instance;
     }
     
@@ -67,52 +72,34 @@ public final class EasyRPC {
                 Method callback;
                 RPCHandler handler;
 
-                if(rpc.withCallBack())
+                boolean withCallBack = false;
+
+                for (RPCFlag flag : rpc.flags()) {
+                    switch (flag) {
+                        case WithCallBack:
+                            withCallBack = true;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                if(withCallBack)
                 {
                     if(rpc.callbackName().isEmpty()) throw new InvalidParameterException("Callback name can't be emtpy.");
 
                     callback = clazz.getDeclaredMethod(rpc.callbackName(), boolean.class);
                     callback.setAccessible(true);
                     if(!Modifier.isStatic(callback.getModifiers())) throw new InvalidParameterException("Callback method must be static member");
-
-                    handler = new RPCHandler(method.getName(), new IRPCH() {
-                        @Override
-                        public void Handle(Object... args) { 
-                            try {
-                                method.invoke(null, args); 
-                                
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        @Override 
-                        public void CallBack(final boolean result) {
-                            try {
-                                callback.invoke(null, result);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }, true);
+                    
+                    handler = new RPCHandler(clazz.getName() + "." + method.getName(), method, callback, true);
                 }
                 else
                 {
-                    handler = new RPCHandler(method.getName(), new IRPCH() {
-                        @Override
-                        public void Handle(Object... args) { 
-                            try {
-                                method.invoke(null, args); 
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        @Override 
-                        public void CallBack(final boolean result) {
-                        }
-                    }, true);
+                    handler = new RPCHandler(clazz.getName() + "." +  method.getName(), method, null, false);
                 }
 
-                rpcMap.put(method.getName(), handler);
+                rpcMap.put(handler.Name, handler);
             }
         }
     }
@@ -138,19 +125,28 @@ public final class EasyRPC {
             e.printStackTrace();
             return false;
         }
-        List<Object> args = new ArrayList<>();
-        Pair<RPCHandler, CallKind> pair = deserializeCallData(message.array(), args);
-        if(pair != null)
+
+        CallData co = serializator.deserializeCallData(message.array());
+        if(co != null && rpcMap.containsKey(co.Name))
         {
-            switch (pair.Second) {
+            RPCHandler handler = rpcMap.get(co.Name);
+            switch (co.CallKind) {
                 case CALLBACK:
-                    pair.First.CallBack(true);
+                    try {
+                        handler.CallBack(null ,true);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                     break;
                 case CALL:
-                    pair.First.Handle(args.toArray());
-                    if(pair.First.WithCallBack)
+                    try {
+                        handler.Handle(null, co.Args.toArray());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    if(handler.WithCallBack)
                     {
-                        callRPC(pair.First, sock, CallKind.CALLBACK);
+                        callRPC(new CallData(handler.Name, CallKind.CALLBACK), sock);
                     }
                     break;
             }
@@ -160,18 +156,19 @@ public final class EasyRPC {
         return false;
     }
 
-    public boolean Call(Socket sock, final String rpcName, Object... args) 
+    public boolean Call(Socket sock, Class<?> clazz, final String rpcName, Object... args) 
     {
-        if(!rpcMap.containsKey(rpcName))
+        String fullName = clazz.getName() + "." + rpcName;
+        if(!rpcMap.containsKey(fullName))
         {
-            throw new InvalidParameterException("RPC Handler with name \"" + rpcName + "\" called but not registered");
+            throw new InvalidParameterException("RPC Handler with name \"" + fullName + "\" called but not registered");
         }
-        return callRPC(rpcMap.get(rpcName), sock, CallKind.CALL, args);        
+        return callRPC(new CallData(fullName, CallKind.CALL, args), sock);        
     }
 
-    private boolean callRPC(final RPCHandler rpc, Socket sock, CallKind callas, Object... args)
+    private boolean callRPC(final CallData rpc, Socket sock)
     {
-        byte[] data = serializeCallData(rpc, callas, args);
+        byte[] data = serializator.serializeCallData(rpc);
         
         OutputStream out;
         try {
@@ -190,96 +187,11 @@ public final class EasyRPC {
         return true;
     }
 
-    private byte[] serializeCallData(final RPCHandler rpc, final CallKind callas, Object... args)
+    private EasyRPC(ICallSerializator ser)
     {
-        int argsSize = 0;
-        List<Param> params = new ArrayList<>();
-        for (Object arg : args) {
-            Param p = new Param(arg);
-            params.add(p);
-            argsSize += p.Size + 6;
-        }
+        if(ser == null) throw new InvalidParameterException("Serializtor is null.");
 
-        int size = rpc.Name.length() + Param.IntSize*4 + Param.DoubleSize + argsSize;
-        ByteBuffer buff = ByteBuffer.allocate(size);
-
-        buff.putInt(ProtocolMagic);
-        buff.putInt(size - ProtocolSize); // body size
-        buff.putDouble(EasyRPC.Version);
-        buff.putInt(callas.ordinal());
-        buff.putInt(rpc.Name.length());
-        buff.put(rpc.Name.getBytes());
-
-        for (Param param : params) {
-            buff.put(param.Bytes);
-        }
-
-        return buff.array();
-    }
-
-    private Pair<RPCHandler, CallKind> deserializeCallData(final byte[] data, List<Object> args)
-    {
-        ByteBuffer buff = ByteBuffer.wrap(data);
-
-        if(buff.limit() < HeadSize)
-        {
-            System.err.println("[ERROR]: Invalid message size");
-            return null;
-        }
-
-        double ver = buff.getDouble();
-        if(ver != EasyRPC.Version)
-        {
-            System.err.println("[ERROR]: Not matching Version (" + ver + " vs " + EasyRPC.Version + ")");
-            return null;
-        }
-
-        int icall = buff.getInt();
-        if(0 > icall || icall > CallKind.values().length)
-        {
-            System.err.println("[ERROR]: Invalid call type");
-            return null;
-        }
-        CallKind callas =  CallKind.values()[icall];
-
-        int size = buff.getInt();
-        byte[] nameBuff = new byte[size];
-        if(buff.remaining() < size)
-        {
-            System.err.println("[ERROR]: Invalid size value in head");
-            return null;
-        }
-        buff.get(nameBuff, 0, size);
-        String name = new String(nameBuff);
-
-        if(buff.remaining() >= 0)
-        {
-            while(buff.remaining() > 0)
-            {
-                char typeCode = buff.getChar();
-                ParamType type = ParamType.values()[typeCode];
-                int paramsize = buff.getInt();
-                byte[] param = new byte[paramsize];
-                buff.get(param);
-                Param p = new Param(type, paramsize, param);
-                args.add(p.Value);
-            }
-        } 
-
-        if(rpcMap.containsKey(name))
-        {
-            return new Pair<RPCHandler, CallKind>(rpcMap.get(name), callas);
-        }
-        else
-        {
-            System.err.println("[ERROR]: RPC with name \"" + name + "\" was not found");
-        }
-
-        return null;
-    }
-
-    private EasyRPC()
-    {
         rpcMap = new HashMap<String, RPCHandler>();
+        serializator = ser;
     }
 }

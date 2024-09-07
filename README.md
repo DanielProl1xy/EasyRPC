@@ -33,7 +33,7 @@ Create a class and annotate it with `@ReplicatedClass`. Define your remote proce
 @ReplicatedClass
 public class TestReplicatedObject {
     
-    @RemoteProcedureCall(withCallBack = true, callbackName = "HandleCallBack")
+    @RemoteProcedureCall(flags = {RPCFlag.WithCallBack}, callbackName="HandleCallBack")
     private static void Handle() {
         System.out.println("Hello, world!"); 
     }
@@ -44,14 +44,14 @@ public class TestReplicatedObject {
     }
 
     @RemoteProcedureCall 
-    private static void WithParam(float id, String str) 
+    private static void WithParam(float id, String str, boolean val) 
     {
         /* 
          * Supported parameter types:
          * String
-         * Number -> int, long, float, double, char, short
+         * Number -> int, long, float, double, char, short, boolean
         */
-        System.out.println("Got parameters: " + id + " : " + str);
+        System.out.println("Got parameters: " + id + " : " + str + " " + val);
     }
 }
 ```
@@ -70,7 +70,7 @@ Once registered, you can invoke the remote procedure calls defined in your repli
 ```java
 EasyRPC sys = EasyRPC.GetInstance();
 sys.Call(socket, "Handle");
-sys.Call(socket, "WithParam", 35.5, "this is a remote message!");
+sys.Call(socket, "WithParam", 35.5, "this is a remote message!", true);
 
 // wait for the call-back, if needed
 sys.Recieve(socket);    
