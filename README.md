@@ -61,7 +61,7 @@ To register your replicated class with the RPC framework, use the EasyRPC single
 
 
 ```java
-EasyRPC sys = EasyRPC.GetInstance();
+EasyRPC sys = EasyRPC.Start(new EasySerializator());
 sys.RegisterClass(TestReplicatedObject.class);
 ```
 
