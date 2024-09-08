@@ -172,7 +172,7 @@ public final class EasyRPC {
             }
             return true;
         }
-        return true;
+        return false;
     }
 
     private boolean callRPC(final CallData rpc, Socket sock)
