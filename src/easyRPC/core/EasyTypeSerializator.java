@@ -34,7 +34,10 @@ public class EasyTypeSerializator implements ITypeSerializator {
             type = ParamType.SHORT;
         } else if (tobj instanceof Boolean) {
             size = Param.CharSize;
-            type = ParamType.BOOL;
+            type = ParamType.BOOL;  
+        } else if (tobj instanceof Byte) {
+            size = Param.ByteSize;
+            type = ParamType.BYTE;
         } else if (tobj instanceof String) {
             String s = (String)tobj;
             size = s.length();
@@ -62,14 +65,15 @@ public class EasyTypeSerializator implements ITypeSerializator {
             case LONG:
                 buff.putLong((Long)tobj);
             break;
-            case CHAR:
-                buff.putChar((Character)tobj);
-            break;
             case SHORT:
                 buff.putShort((Short)tobj);
             break;
             case BOOL:
-                buff.putChar((char)((Boolean) tobj ? 1 : 0));
+                buff.put((byte)((Boolean) tobj ? 1 : 0));
+            break;
+            case CHAR:
+            case BYTE:
+                buff.put((byte)tobj);
             break;
             case STRING:
                 buff.put(((String)tobj).getBytes());
@@ -99,14 +103,15 @@ public class EasyTypeSerializator implements ITypeSerializator {
             case LONG:
                 val = buff.getLong();
             break;
-            case CHAR:
-                val = buff.getChar();
-            break;
             case SHORT:
                 val = buff.getShort();
             break;
             case BOOL:
-                val = (buff.getChar() != 0);
+                val = (buff.get() != 0);
+            break;
+            case CHAR:
+            case BYTE:
+                val = buff.get();
             break;
             case STRING:
                 val = new String(data);
