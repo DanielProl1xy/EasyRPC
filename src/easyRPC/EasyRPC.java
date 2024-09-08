@@ -91,14 +91,14 @@ public final class EasyRPC {
                     if(!Modifier.isStatic(callback.getModifiers())) throw new InvalidParameterException("Callback method must be static member");
                     
                     callback.setAccessible(true);
-                    handler = new RPCHandler(clazz.getName() + "." + method.getName(), method, callback, true);
+                    handler = new RPCHandler(method, callback, true);
                 }
                 else
                 {
-                    handler = new RPCHandler(clazz.getName() + "." +  method.getName(), method, null, false);
+                    handler = new RPCHandler(method, null, false);
                 }
 
-                rpcMap.put(handler.Name.hashCode(), handler);
+                rpcMap.put((clazz.getName() + "." + method.getName()).hashCode(), handler);
             }
         }
     }
