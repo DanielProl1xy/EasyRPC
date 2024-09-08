@@ -126,9 +126,7 @@ public final class EasyRPC {
         }
 
         CallData co = serializator.deserializeCallData(message.array());
-        execRPC(co, sock);
-
-        return false;
+        return execRPC(co, sock);
     }
 
     public boolean Call(Socket sock, Class<?> clazz, final String rpcName, Object... args) 
