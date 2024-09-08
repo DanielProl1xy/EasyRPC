@@ -8,13 +8,13 @@ import easyRPC.EasyRPC.CallKind;
 public class CallData {
 
     public final List<Object> Args;
-    public final String Name;
+    public final int TargetHash;
     public final CallKind CallKind;
 
-    public CallData(final String n, final CallKind kind, final Object... rargs)
+    public CallData(final int hash, final CallKind kind, final Object... rargs)
     {
         CallKind = kind;
-        Name = n;
+        TargetHash = hash;
         List<Object> ar = new ArrayList<>();
         for (Object arg : rargs) {
             ar.add(arg);
@@ -22,10 +22,10 @@ public class CallData {
         Args = ar;
     }
     
-    public CallData(final List<Object> rargs, final String n, final CallKind kind)
+    public CallData(final List<Object> rargs, final int hash, final CallKind kind)
     {
         CallKind = kind;
-        Name = n;
+        TargetHash = hash;
         Args = new ArrayList<>(rargs);
     }    
 }

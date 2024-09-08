@@ -19,7 +19,6 @@ public abstract class MainApplication {
                 try {
                     ServerSocket serv = new ServerSocket(5070);
                     Socket cli = serv.accept();
-                    sys.Call(cli, TestReplicatedObject.class, "Handle");
                     sys.Call(cli, TestReplicatedObject.class, "WithParam",
                                                     35.5f, "boolean value is: ", false);
                     sys.Receive(cli);
@@ -36,6 +35,7 @@ public abstract class MainApplication {
             {
                 try {
                     Socket sock = new Socket("127.0.0.1", 5070);
+                    sys.Call(sock, TestReplicatedObject.class, "Handle");
                     sys.Receive(sock);
                     sys.Receive(sock);
                     sock.close();

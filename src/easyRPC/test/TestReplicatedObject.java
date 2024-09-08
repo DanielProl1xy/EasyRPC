@@ -17,7 +17,7 @@ public class TestReplicatedObject {
     @RemoteCallBack
     private static void HandleCallBack(final boolean result)
     {
-        System.out.println("CallBack"); 
+        System.out.println("CallBack " + result); 
     }
 
     @RemoteProcedureCall

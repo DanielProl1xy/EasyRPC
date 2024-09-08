@@ -10,12 +10,12 @@ import easyRPC.core.internal.Param.ParamType;
 public class EasyTypeSerializator implements ITypeSerializator {
 
     @Override
-    public byte[] Serlialize(Object tobj) {
-
+    public byte[] Serlialize(Object tobj) 
+    {
         ParamType type;
         int size;
          if (tobj instanceof Integer) {
-            size = Param.LongSize;
+            size = Param.IntSize;
             type = ParamType.INT;
         } else if (tobj instanceof Float) {
             size = Param.FloatSize;
@@ -33,7 +33,7 @@ public class EasyTypeSerializator implements ITypeSerializator {
             size = Param.ShortSize;
             type = ParamType.SHORT;
         } else if (tobj instanceof Boolean) {
-            size = Param.IntSize;
+            size = Param.CharSize;
             type = ParamType.BOOL;
         } else if (tobj instanceof String) {
             String s = (String)tobj;
@@ -45,7 +45,7 @@ public class EasyTypeSerializator implements ITypeSerializator {
             throw new InvalidParameterException("Invalid argument Type");
         }
 
-        ByteBuffer buff = ByteBuffer.allocate(size + 6);
+        ByteBuffer buff = ByteBuffer.allocate(size + Param.IntSize + Param.CharSize);
         buff.putChar((char)type.ordinal());
         buff.putInt(size);
         switch(type)
@@ -89,33 +89,32 @@ public class EasyTypeSerializator implements ITypeSerializator {
         switch (type) {
             case INT:
                 val = buff.getInt();
-                break;
+            break;
             case FLOAT:
                 val = buff.getFloat();
-                break;
+            break;
             case DOUBLE:
                 val = buff.getDouble();
-                break;
+            break;
             case LONG:
                 val = buff.getLong();
-                break;
+            break;
             case CHAR:
                 val = buff.getChar();
-                break;
+            break;
             case SHORT:
                 val = buff.getShort();
-                break;
+            break;
             case BOOL:
                 val = (buff.getChar() != 0);
             break;
             case STRING:
                 val = new String(data);
-                break;
+            break;
             default:
                 val = null;
             break;
         }
-
         return val;
     }
     

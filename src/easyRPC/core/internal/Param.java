@@ -19,7 +19,7 @@ public final class Param {
     public final static int DoubleSize = 8;
     public final static int LongSize = 8;
     public final static int FloatSize = 4;
-    public final static int CharSize = 1;
+    public final static int CharSize = 2;
     public final static int ShortSize = 2;
 
 }

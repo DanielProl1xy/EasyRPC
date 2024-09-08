@@ -24,7 +24,8 @@ public class EasySerializator implements ICallSerializator {
     }
 
     @Override
-    public byte[] serializeCallData(final CallData call) {
+    public byte[] serializeCallData(final CallData call) 
+    {
         int argsSize = 0;
         List<byte[]> params = new ArrayList<>();
         for (Object arg : call.Args) {
@@ -32,22 +33,18 @@ public class EasySerializator implements ICallSerializator {
             params.add(paramData);
             argsSize += paramData.length;
         }
-
-        int size = call.Name.length() + Param.IntSize*4 + Param.DoubleSize + argsSize;
+        
+        int size = Param.IntSize*4 + Param.DoubleSize + argsSize;
         ByteBuffer buff = ByteBuffer.allocate(size);
-
+        
         buff.putInt(EasyRPC.ProtocolMagic);
         buff.putInt(size - EasyRPC.ProtocolSize); // body size
-        buff.putDouble(EasyRPC.Version);
-        
+        buff.putDouble(EasyRPC.Version);      
         buff.putInt(call.CallKind.ordinal());
-        buff.putInt(call.Name.length());
-        buff.put(call.Name.getBytes());
-
+        buff.putInt(call.TargetHash);
         for (byte[] bs : params) {
             buff.put(bs);
         }
-
         return buff.array();
     }
 
@@ -70,22 +67,13 @@ public class EasySerializator implements ICallSerializator {
         }
 
         int icall = buff.getInt();
-        if(0 > icall || icall > CallKind.values().length)
+        if(icall < 0 || CallKind.values().length < icall)
         {
             System.err.println("[ERROR]: Invalid call type");
             return null;
         }
         CallKind callas =  CallKind.values()[icall];
-
-        int size = buff.getInt();
-        byte[] nameBuff = new byte[size];
-        if(buff.remaining() < size)
-        {
-            System.err.println("[ERROR]: Invalid size value in head");
-            return null;
-        }
-        buff.get(nameBuff, 0, size);
-        String name = new String(nameBuff);
+        int hash = buff.getInt();
 
         List<Object> args = new ArrayList<>();
         while(buff.remaining() > 0)
@@ -98,7 +86,7 @@ public class EasySerializator implements ICallSerializator {
             args.add(typeSerializtor.Deserialize(param, type));
         }
 
-        return new CallData(args, name, callas);
+        return new CallData(args, hash, callas);
     }
     
 }
