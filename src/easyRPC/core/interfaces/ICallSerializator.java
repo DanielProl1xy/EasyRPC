@@ -4,7 +4,7 @@ import easyRPC.core.internal.CallData;
 
 public interface ICallSerializator {
 
-    public byte[] serializeCallData(final CallData call);
-    public CallData deserializeCallData(final byte[] data);
+    public byte[] SerializeCallData(final CallData call);
+    public CallData DeserializeCallData(final byte[] data);
     
 }

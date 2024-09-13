@@ -125,7 +125,7 @@ public final class EasyRPC {
             return false;
         }
 
-        CallData co = serializator.deserializeCallData(message.array());
+        CallData co = serializator.DeserializeCallData(message.array());
         return execRPC(co, sock);
     }
 
@@ -175,7 +175,7 @@ public final class EasyRPC {
 
     private boolean callRPC(final CallData rpc, Socket sock)
     {
-        byte[] data = serializator.serializeCallData(rpc);
+        byte[] data = serializator.SerializeCallData(rpc);
         
         OutputStream out;
         try {

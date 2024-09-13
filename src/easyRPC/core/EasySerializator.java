@@ -24,7 +24,7 @@ public class EasySerializator implements ICallSerializator {
     }
 
     @Override
-    public byte[] serializeCallData(final CallData call) 
+    public byte[] SerializeCallData(final CallData call) 
     {
         int argsSize = 0;
         List<byte[]> params = new ArrayList<>();
@@ -49,7 +49,7 @@ public class EasySerializator implements ICallSerializator {
     }
 
     @Override
-    public CallData deserializeCallData(byte[] data)
+    public CallData DeserializeCallData(byte[] data)
     {
         ByteBuffer buff = ByteBuffer.wrap(data);
 
