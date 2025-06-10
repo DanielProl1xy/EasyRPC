@@ -10,7 +10,8 @@ public abstract class MainApplication {
     public static void main(String[] args) throws Exception
     {
         EasyRPC sys = EasyRPC.Start(new EasySerializator());
-        sys.RegisterClass(TestReplicatedObject.class);
+        TestReplicatedObject object = new TestReplicatedObject();
+        sys.RegisterObject(object);
 
         Thread servT = new Thread() {
             @Override

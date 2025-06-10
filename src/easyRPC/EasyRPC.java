@@ -9,11 +9,13 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import easyRPC.annotations.RemoteProcedureCall;
-import easyRPC.annotations.ReplicatedClass;
+import easyRPC.annotations.ReplicateObject;
 import easyRPC.annotations.RemoteProcedureCall.RPCFlag;
 import easyRPC.core.interfaces.ICallSerializator;
 import easyRPC.core.internal.CallData;
@@ -29,6 +31,7 @@ public final class EasyRPC {
     private static EasyRPC instance;
 
     private Map<Integer, RPCHandler> rpcMap;
+    private List<Class<?>> registeredClassess;
 
     private final ICallSerializator serializator;
         
@@ -53,12 +56,20 @@ public final class EasyRPC {
         return instance;
     }
     
-    public void RegisterClass(Class<?> clazz) throws Exception
+    public void RegisterObject(final Object obj) throws Exception
     {
-        if(!clazz.isAnnotationPresent(ReplicatedClass.class))
+        final Class<?> clazz = obj.getClass();
+
+        if(!clazz.isAnnotationPresent(ReplicateObject.class))
         {
-            throw new InvalidParameterException("Object must have @ReplicatedClass annotation");
+            throw new InvalidParameterException("Object must have @ReplicateObject annotation");
         }
+
+        if(registeredClassess.contains(clazz)) {
+            throw new InvalidParameterException("Object of this class is already replicated: " + clazz.toString());
+        }
+        
+        registeredClassess.add(clazz);
         
         for (Method method : clazz.getDeclaredMethods()) {
             
@@ -66,7 +77,7 @@ public final class EasyRPC {
             {
                 RemoteProcedureCall rpc = (method.getAnnotation(RemoteProcedureCall.class));
                 
-                if(!Modifier.isStatic(method.getModifiers())) throw new InvalidParameterException("RPC method must be static mebmer");
+                if(Modifier.isStatic(method.getModifiers())) throw new InvalidParameterException("RPC method must not be static mebmer");
                 
                 method.setAccessible(true);
                 RPCHandler handler;                
@@ -88,17 +99,18 @@ public final class EasyRPC {
                     
                     Method callback;
                     callback = clazz.getDeclaredMethod(rpc.callbackName(), boolean.class);
-                    if(!Modifier.isStatic(callback.getModifiers())) throw new InvalidParameterException("Callback method must be static member");
+                    if(Modifier.isStatic(callback.getModifiers())) throw new InvalidParameterException("Callback method must not be static member");
                     
                     callback.setAccessible(true);
-                    handler = new RPCHandler(method, callback, true);
+                    handler = new RPCHandler(method, callback, true, obj);
                 }
                 else
                 {
-                    handler = new RPCHandler(method, null, false);
+                    handler = new RPCHandler(method, null, false, obj);
                 }
 
-                rpcMap.put((clazz.getName() + "." + method.getName()).hashCode(), handler);
+                final int hash = (clazz.getName() + "." + method.getName()).hashCode();
+                rpcMap.put(hash, handler);
             }
         }
     }
@@ -149,7 +161,7 @@ public final class EasyRPC {
             switch (rpc.CallKind) {
                 case CALLBACK:
                     try {
-                        handler.CallBack(null, (boolean)rpc.Args.toArray()[0]);
+                        handler.CallBack((boolean)rpc.Args.toArray()[0]);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -157,7 +169,7 @@ public final class EasyRPC {
                 case CALL:
                     boolean result = true;
                     try {
-                        handler.Handle(null, rpc.Args.toArray());
+                        handler.Handle(rpc.Args.toArray());
                     } catch (Exception e) {
                         e.printStackTrace();
                         result = false;
@@ -199,6 +211,7 @@ public final class EasyRPC {
         if(ser == null) throw new InvalidParameterException("Serializator is null.");
 
         rpcMap = new HashMap<Integer, RPCHandler>();
+        registeredClassess = new ArrayList<>();
         serializator = ser;
     }
 }
