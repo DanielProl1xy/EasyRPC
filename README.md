@@ -10,7 +10,7 @@ This Java RPC (Remote Procedure Call) framework allows for easy creation and man
 
 ## Annotations
 
-### `@ReplicatedClass`
+### `@ReplicateObject`
 
 This annotation marks a class as a replicated that can contain remote procedure calls.
 
