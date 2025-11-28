@@ -50,6 +50,7 @@ public class TestReplicatedObject {
          * Supported parameter types:
          * String
          * Number -> int, long, float, double, char, short, boolean
+         * byte[]
         */
         System.out.println("Got parameters: " + id + " : " + str + " " + val);
     }

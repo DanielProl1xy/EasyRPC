@@ -13,6 +13,7 @@ public final class Param {
         BOOL,
         BYTE,
         STRING,
+        BYTE_ARRAY,
         INVALID
     }
 

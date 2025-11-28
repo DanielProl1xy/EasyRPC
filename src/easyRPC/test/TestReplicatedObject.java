@@ -21,8 +21,8 @@ public class TestReplicatedObject {
     }
 
     @RemoteProcedureCall
-    private void WithParam(float id, String str, boolean val)
+    private void WithParam(float id, byte[] str, boolean val)
     {
-        System.out.println("Got parameters: " + id + ", " + str + " " + val);
+        System.out.println("Got parameters: " + id + ", " + new String(str) + " " + val);
     }
 }

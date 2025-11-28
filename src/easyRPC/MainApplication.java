@@ -21,7 +21,7 @@ public abstract class MainApplication {
                     ServerSocket serv = new ServerSocket(5070);
                     Socket cli = serv.accept();
                     sys.Call(cli, TestReplicatedObject.class, "WithParam",
-                                                    35.5f, "boolean value is: ", true);
+                                                    35.5f, "boolean value is: ".getBytes(), true);
                     sys.Receive(cli);
                     serv.close();
                 } catch (Exception e) {

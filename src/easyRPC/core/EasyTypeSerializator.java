@@ -42,6 +42,9 @@ public class EasyTypeSerializator implements ITypeSerializator {
             String s = (String)tobj;
             size = s.length();
             type = ParamType.STRING;
+        } else if (tobj instanceof byte[]){
+            size = ((byte[])tobj).length;
+            type = ParamType.BYTE_ARRAY;
         } else {
             size = 0;
             type = ParamType.INVALID;
@@ -78,6 +81,9 @@ public class EasyTypeSerializator implements ITypeSerializator {
             case STRING:
                 buff.put(((String)tobj).getBytes());
             break;
+            case BYTE_ARRAY:
+                buff.put((byte[])tobj);
+            break;
             case INVALID:
                 throw new InvalidParameterException("Invalid argument Type");
         }
@@ -85,7 +91,7 @@ public class EasyTypeSerializator implements ITypeSerializator {
     }
 
     @Override
-    public Object Deserialize(final byte[] data, ParamType type) 
+    public Object Deserialize(final byte[] data, final ParamType type, final int size) 
     {
         ByteBuffer buff = ByteBuffer.wrap(data);
         Object val = null;
@@ -115,6 +121,10 @@ public class EasyTypeSerializator implements ITypeSerializator {
             break;
             case STRING:
                 val = new String(data);
+            break;
+            case BYTE_ARRAY:
+                val = new byte[size];
+                buff.get((byte[])val);
             break;
             default:
                 val = null;

@@ -83,7 +83,7 @@ public class EasySerializator implements ICallSerializator {
             int paramsize = buff.getInt();
             byte[] param = new byte[paramsize];
             buff.get(param);
-            args.add(typeSerializtor.Deserialize(param, type));
+            args.add(typeSerializtor.Deserialize(param, type, paramsize));
         }
 
         return new CallData(args, hash, callas);
